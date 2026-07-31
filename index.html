@@ -48,18 +48,19 @@
   }
   nav .wrap{
     display:flex; align-items:center; justify-content:space-between;
-    height:72px;
+    padding:14px 32px;
   }
   .logo{
     display:flex; align-items:center;
   }
   .logo img{
-    height:34px; width:auto; display:block;
+    height:136px; width:auto; display:block;
   }
   .navlinks{display:flex; gap:32px; font-size:14px; color:var(--text-dim);}
   .navlinks a{text-decoration:none; transition:color .2s;}
   .navlinks a:hover{color:var(--text);}
   @media (max-width:760px){ .navlinks{display:none;} }
+  @media (max-width:640px){ .logo img{height:80px;} }
 
   /* ---------- HERO ---------- */
   .hero{
