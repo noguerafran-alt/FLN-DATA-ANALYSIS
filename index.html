@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLN Data Analysis — Estudio de Datos & Automatización</title>
+<link rel="icon" href="assets/logo-fln.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0E13;
+    --ink-soft:#141A22;
+    --panel:#1B222C;
+    --bezel:#E9E6DC;
+    --blue:#4FC3E8;
+    --orange:#F2871D;
+    --text:#E7EAEE;
+    --text-dim:#9AA4B2;
+    --line:rgba(233,230,220,0.10);
+    --line-strong:rgba(233,230,220,0.18);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk', sans-serif;
+    letter-spacing:-0.01em;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+  @media (max-width:640px){ .wrap{padding:0 20px;} }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(11,14,19,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    height:72px;
+  }
+  .logo{
+    display:flex; align-items:center;
+  }
+  .logo img{
+    height:34px; width:auto; display:block;
+  }
+  .navlinks{display:flex; gap:32px; font-size:14px; color:var(--text-dim);}
+  .navlinks a{text-decoration:none; transition:color .2s;}
+  .navlinks a:hover{color:var(--text);}
+  @media (max-width:760px){ .navlinks{display:none;} }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding:120px 0 90px;
+    position:relative;
+    overflow:hidden;
+    border-bottom:1px solid var(--line);
+  }
+  .hero::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse 70% 60% at 50% 0%, black 0%, transparent 75%);
+    opacity:.5;
+    pointer-events:none;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--blue);
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:22px;
+  }
+  .eyebrow::before{content:'//'; color:var(--orange); opacity:.8;}
+  .hero h1{
+    font-size:clamp(34px, 5.4vw, 60px);
+    font-weight:700;
+    max-width:780px;
+    line-height:1.08;
+  }
+  .hero h1 em{
+    font-style:normal;
+    color:var(--blue);
+  }
+  .hero p.sub{
+    max-width:560px;
+    color:var(--text-dim);
+    font-size:17px;
+    margin-top:24px;
+  }
+  .hero-cta{display:flex; gap:16px; margin-top:38px; flex-wrap:wrap;}
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    padding:13px 22px;
+    border-radius:3px;
+    text-decoration:none;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:transform .15s ease, background .2s ease, border-color .2s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-primary{background:var(--orange); color:#171106; font-weight:600;}
+  .btn-primary:hover{background:#f6a24a;}
+  .btn-ghost{border:1px solid var(--line-strong); color:var(--text);}
+  .btn-ghost:hover{border-color:var(--orange); color:var(--orange);}
+
+  /* ---------- SPLIT-FLAP BOARD ---------- */
+  .board{
+    margin-top:64px;
+    background:var(--panel);
+    border:1px solid var(--line-strong);
+    border-radius:6px;
+    max-width:640px;
+    overflow:hidden;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.5);
+  }
+  .board-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 18px;
+    border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+  .board-head .live{color:var(--orange); display:flex; align-items:center; gap:6px;}
+  .board-head .live::before{
+    content:''; width:6px; height:6px; border-radius:50%;
+    background:var(--orange); box-shadow:0 0 8px var(--orange);
+    animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .board-row{
+    display:grid;
+    grid-template-columns:60px 1fr 150px;
+    align-items:center;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+  }
+  .board-row:last-child{border-bottom:none;}
+  .board-row .idx{color:var(--text-dim);}
+  .board-row .flap{
+    overflow:hidden; height:1.4em; position:relative;
+  }
+  .board-row .flap span{
+    display:block;
+    animation:flapcycle 9s infinite;
+  }
+  .board-row:nth-child(2) .flap span{animation-delay:0s;}
+  .board-row:nth-child(3) .flap span{animation-delay:.15s;}
+  .board-row:nth-child(4) .flap span{animation-delay:.3s;}
+  @keyframes flapcycle{
+    0%, 42%{transform:translateY(0);}
+    50%, 92%{transform:translateY(-1.4em);}
+    100%{transform:translateY(-2.8em);}
+  }
+  .board-row .status{
+    text-align:right; color:var(--orange); letter-spacing:.06em;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .board-row .flap span{animation:none;}
+  }
+  @media (max-width:520px){
+    .board-row{grid-template-columns:36px 1fr 100px; font-size:11.5px;}
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:100px 0;}
+  .section-head{max-width:640px; margin-bottom:56px;}
+  .section-head .eyebrow{margin-bottom:14px;}
+  .section-head h2{font-size:clamp(26px,3.4vw,36px); font-weight:600;}
+  .section-head p{color:var(--text-dim); margin-top:14px; font-size:15.5px;}
+
+  /* ---------- PROJECT CARDS ---------- */
+  .project{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:56px;
+    align-items:center;
+    padding:56px 0;
+    border-top:1px solid var(--line);
+  }
+  .project:nth-child(even) .project-media{order:2;}
+  .project-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--orange);
+    margin-bottom:14px;
+  }
+  .project h3{font-size:26px; font-weight:600; margin-bottom:16px;}
+  .project p{color:var(--text-dim); font-size:15px; margin-bottom:14px;}
+  .project p strong{color:var(--text); font-weight:500;}
+  .stack{display:flex; flex-wrap:wrap; gap:8px; margin-top:22px;}
+  .chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    padding:6px 11px;
+    border:1px solid var(--line-strong);
+    border-radius:20px;
+    color:var(--text-dim);
+  }
+  .project-link{
+    display:inline-flex; align-items:center; gap:8px;
+    margin-top:24px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    color:var(--blue);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .project-link:hover{border-color:var(--blue);}
+
+  /* ---------- SCREEN BEZEL (monitor frame for screenshots) ---------- */
+  .screen{
+    background:var(--bezel);
+    border-radius:14px;
+    padding:14px 14px 20px;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.6);
+  }
+  .screen .cam{
+    width:6px; height:6px; border-radius:50%;
+    background:#00000022; margin:0 auto 10px;
+  }
+  .screen img{
+    width:100%; display:block; border-radius:4px;
+  }
+  .screen.stacked{display:flex; flex-direction:column; gap:10px;}
+  .screen.stacked img{border-radius:4px;}
+  .screen.duo{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .screen.duo img{border-radius:4px;}
+  .screen.duo .media-caption{margin-top:8px;}
+  @media (max-width:520px){ .screen.duo{grid-template-columns:1fr;} }
+  .media-caption{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--text-dim);
+    margin-top:12px;
+    text-align:center;
+  }
+  @media (max-width:860px){
+    .project{grid-template-columns:1fr; gap:32px;}
+    .project:nth-child(even) .project-media{order:0;}
+  }
+
+  /* ---------- FLOW DIAGRAM (QRControl) ---------- */
+  .flow{
+    background:var(--panel);
+    border:1px solid var(--line-strong);
+    border-radius:10px;
+    padding:32px 24px;
+  }
+  .flow-row{display:flex; align-items:center; flex-wrap:wrap; gap:0;}
+  .flow-node{
+    flex:1 1 auto;
+    min-width:120px;
+    text-align:center;
+    padding:18px 10px;
+  }
+  .flow-node .ic{font-size:26px; margin-bottom:10px; display:block;}
+  .flow-node .lb{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-dim);}
+  .flow-arrow{color:var(--orange); font-size:20px; padding:0 4px; flex:0 0 auto;}
+  @media (max-width:640px){
+    .flow-row{flex-direction:column;}
+    .flow-arrow{transform:rotate(90deg); padding:4px 0;}
+  }
+
+  /* ---------- EXPLAINER PANEL (t-SNE / Hinton) ---------- */
+  .explainer{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:16px;
+  }
+  .explainer-col{
+    background:var(--panel);
+    padding:36px 34px;
+  }
+  .explainer-kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--orange);
+    margin-bottom:10px;
+  }
+  .explainer h4{font-size:21px; font-weight:600; margin-bottom:16px;}
+  .explainer p{color:var(--text-dim); font-size:14.5px; margin-bottom:14px;}
+  .explainer em{color:var(--text); font-style:normal;}
+  .hinton-facts{list-style:none; margin:18px 0;}
+  .hinton-facts li{
+    display:grid;
+    grid-template-columns:64px 1fr;
+    gap:14px;
+    padding:12px 0;
+    border-top:1px solid var(--line);
+    font-size:14px;
+    color:var(--text-dim);
+  }
+  .hinton-facts li:first-child{border-top:none;}
+  .hinton-facts .yr{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--blue);
+  }
+  .hinton-note{
+    font-size:13.5px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    color:var(--text-dim);
+  }
+  @media (max-width:860px){
+    .explainer{grid-template-columns:1fr;}
+  }
+
+  /* ---------- METHOD (star schema) ---------- */
+  .method{
+    display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:center;
+  }
+  @media (max-width:860px){ .method{grid-template-columns:1fr;} }
+  .method .screen{background:#DEDBD0;}
+
+  /* ---------- TOOLS ---------- */
+  .tools-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .tools-cat{background:var(--ink); padding:28px 26px;}
+  .tools-cat h4{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--blue); margin-bottom:16px;
+  }
+  .tools-cat ul{list-style:none;}
+  .tools-cat li{
+    font-size:14.5px; color:var(--text-dim);
+    padding:6px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .tools-cat li:last-child{border-bottom:none;}
+  .tools-cat li strong{color:var(--text); font-weight:500;}
+
+  .spotlight{
+    margin-top:48px;
+    background:var(--panel);
+    border:1px solid var(--line-strong);
+    border-radius:10px;
+    padding:40px 38px;
+  }
+  .spotlight h4{font-size:22px; font-weight:600; margin-bottom:28px;}
+  .spotlight-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
+    gap:28px 32px;
+  }
+  .spotlight .step{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--orange);
+    display:block;
+    margin-bottom:8px;
+  }
+  .spotlight h5{font-size:15px; font-weight:600; margin-bottom:8px;}
+  .spotlight p{color:var(--text-dim); font-size:14px; line-height:1.6;}
+
+  /* ---------- CONTACT / FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:80px 0 40px;
+  }
+  .cta-block{
+    text-align:center;
+    max-width:620px; margin:0 auto 60px;
+  }
+  .cta-block h2{font-size:clamp(24px,3.6vw,34px); font-weight:600; margin-bottom:18px;}
+  .cta-block p{color:var(--text-dim); margin-bottom:30px;}
+  .footer-links{
+    display:flex; justify-content:center; gap:14px; flex-wrap:wrap;
+  }
+  .footer-bottom{
+    margin-top:70px;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    font-size:13px; color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo"><img src="assets/logo-fln.png" alt="FLN Data Analysis"></div>
+    <div class="navlinks">
+      <a href="#proyectos">Proyectos</a>
+      <a href="#metodologia">Metodología</a>
+      <a href="#herramientas">Herramientas</a>
+      <a href="#contacto">Contacto</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Estudio de datos & automatización</div>
+    <h1>Convertimos la operación diaria en <em>paneles que se entienden de un vistazo</em>.</h1>
+    <p class="sub">Armamos paneles, modelos de datos y automatizaciones a medida para empresas que necesitan ver qué está pasando en su operación en tiempo real — sin plantillas genéricas ni licencias de software caras.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#proyectos">Ver proyectos</a>
+      <a class="btn btn-ghost" href="#contacto">Hablemos de tu operación</a>
+    </div>
+
+    <div class="board">
+      <div class="board-head">
+        <span>Panel de estado</span>
+        <span class="live">en línea</span>
+      </div>
+      <div class="board-row">
+        <span class="idx mono">01</span>
+        <span class="flap"><span>YPF AVIACIÓN — RUTAS Y COMBUSTIBLE</span></span>
+        <span class="status">DESPLEGADO</span>
+      </div>
+      <div class="board-row">
+        <span class="idx mono">02</span>
+        <span class="flap"><span>QRCONTROL — ESCANEO Y VENTAS</span></span>
+        <span class="status">DESPLEGADO</span>
+      </div>
+      <div class="board-row">
+        <span class="idx mono">03</span>
+        <span class="flap"><span>AMCOR — SIMPLIFICACIÓN CON T-SNE</span></span>
+        <span class="status">DESPLEGADO</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="proyectos">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Casos reales, en producción</div>
+      <h2>Tres formas distintas de resolver el mismo problema: datos dispersos</h2>
+      <p>Los tres proyectos de abajo son trabajos reales. Explicamos qué problema resuelven y cómo están construidos — sin mostrar cifras ni información interna de los negocios para los que se hicieron.</p>
+    </div>
+
+    <!-- PROYECTO 1: YPF AVIACIÓN -->
+    <article class="project">
+      <div class="project-text">
+        <div class="project-tag">Caso 01 — Business Intelligence + simulación</div>
+        <h3>YPF Aviación — Panel de rutas y combustible</h3>
+        <p>Este panel cruza dos mundos de información que normalmente viven separados: las <strong>estadísticas oficiales de tráfico aéreo</strong> que publica ANAC (vuelos, pasajeros y ocupación por ruta y aeropuerto) y los <strong>datos propios de despacho de combustible</strong> de la empresa.</p>
+        <p>Un panel de administración permite cargar cada mes los reportes oficiales en Excel o PDF tal cual se publican; el sistema los interpreta automáticamente, actualiza lo que cambió y agrega lo nuevo, sin duplicar nada y sin que nadie tenga que tocar una fórmula.</p>
+        <p>Con esa información ya ordenada, el panel muestra un <strong>mapa mundial interactivo</strong> de rutas, tableros de tendencia año contra año, y un <strong>modelo de estimación de consumo de combustible</strong> según el tipo de aeronave y la distancia de cada ruta — útil para simular escenarios sin depender de datos reales todavía disponibles.</p>
+        <div class="stack">
+          <span class="chip">Python · Flask</span>
+          <span class="chip">PostgreSQL</span>
+          <span class="chip">SQLAlchemy</span>
+          <span class="chip">Plotly.js</span>
+          <span class="chip">Lectura de Excel/PDF</span>
+          <span class="chip">Modelo de consumo por aeronave</span>
+          <span class="chip">Render</span>
+        </div>
+      </div>
+      <div class="project-media">
+        <div class="screen stacked">
+          <img src="assets/mapa-rutas-2.png" alt="Mapa mundial de rutas aéreas del panel YPF Aviación">
+          <img src="assets/ypf-dashboard.png" alt="Tablero de tendencias y carga de combustible del panel YPF Aviación">
+        </div>
+        <p class="media-caption">Capturas reales del panel — los valores puntuales fueron cubiertos a pedido del cliente.</p>
+      </div>
+    </article>
+
+    <!-- PROYECTO 2: QRCONTROL -->
+    <article class="project">
+      <div class="project-media">
+        <div class="flow">
+          <div class="flow-row">
+            <div class="flow-node"><span class="ic">📷</span><span class="lb">CÁMARA<br>DEL CELULAR</span></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node"><span class="ic">▦</span><span class="lb">CATÁLOGO Y<br>STOCK</span></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node"><span class="ic">💳</span><span class="lb">COBRO<br>ONLINE</span></div>
+          </div>
+          <div class="flow-row" style="margin-top:20px;">
+            <div class="flow-node"><span class="ic">🏷️</span><span class="lb">ETIQUETAS<br>PARA IMPRIMIR</span></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node"><span class="ic">📦</span><span class="lb">SEGUIMIENTO<br>DE PEDIDOS</span></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node"><span class="ic">💬</span><span class="lb">CHATBOT DE<br>WHATSAPP</span></div>
+          </div>
+        </div>
+        <p class="media-caption">Flujo simplificado del sistema — de un escaneo a un pedido resuelto por WhatsApp.</p>
+      </div>
+      <div class="project-text">
+        <div class="project-tag">Caso 02 — Automatización comercial</div>
+        <h3>QRControl — Escaneo, catálogo y ventas por QR</h3>
+        <p>Pensado para negocios que necesitan controlar stock y ventas sin pagar un sistema de punto de venta caro ni instalar nada. Se abre desde el navegador del celular: al apuntar la cámara a un código QR o de barras de un producto, la app registra el movimiento automáticamente en una <strong>Google Sheet</strong> que el negocio ya usaba, sin necesidad de una base de datos aparte.</p>
+        <p>Sobre esa misma base se armó un <strong>catálogo con fotos y categorías</strong>, generación de <strong>etiquetas con código de barras/QR</strong> listas para imprimir, <strong>cobro online con Mercado Pago</strong>, un módulo para seguir el estado de cada pedido y un <strong>chatbot de WhatsApp</strong> que responde consultas y confirma pedidos sin intervención manual.</p>
+        <div class="stack">
+          <span class="chip">Node.js · Express</span>
+          <span class="chip">Google Sheets API</span>
+          <span class="chip">Mercado Pago API</span>
+          <span class="chip">WhatsApp Business API</span>
+          <span class="chip">Generación de PDF</span>
+          <span class="chip">Códigos de barra/QR</span>
+          <span class="chip">Render</span>
+        </div>
+        <a class="project-link" href="https://qrcontrol.onrender.com/" target="_blank" rel="noopener">Ver demo en vivo ↗</a>
+      </div>
+    </article>
+
+    <!-- PROYECTO 3: AMCOR t-SNE -->
+    <article class="project">
+      <div class="project-text">
+        <div class="project-tag">Caso 03 — Machine learning no supervisado</div>
+        <h3>AMCOR — Simplificación del mix de preformas con t-SNE</h3>
+        <p>AMCOR es una multinacional de envases que fabrica <strong>preformas</strong> (la pieza plástica que después se sopla para formar una botella) en cientos de variantes: distintos pesos, colores, resinas y moldes. Con tanta variedad, es difícil saber qué combinaciones agrupar para simplificar la producción sin dejar de cubrir la demanda real de los clientes.</p>
+        <p>Se tomaron cerca de <strong>250 variables</strong> que describen cada preforma sobre más de mil registros históricos de ventas, y se aplicó <strong>t-SNE</strong> para reducir esa altísima dimensionalidad a un mapa en 2D donde las preformas parecidas quedan cerca entre sí. Sobre ese mapa se corrió un <strong>clustering (k-means)</strong> para encontrar grupos naturales de productos.</p>
+        <p>El resultado fueron <strong>5 grupos</strong> claramente diferenciados — entre ellos, bebidas frías de gran formato, bebidas de formato chico, envases rígidos de uso doméstico, aceites de uso alimenticio/industrial y productos de cuidado personal — que le permiten a la empresa enfocar la producción en menos variantes por grupo sin perder cobertura de la demanda, mejorando indicadores como el <strong>OEE</strong> (eficiencia general de los equipos) y liberando espacio de almacenamiento.</p>
+        <div class="stack">
+          <span class="chip">R</span>
+          <span class="chip">Rtsne</span>
+          <span class="chip">k-means</span>
+          <span class="chip">ggplot2</span>
+          <span class="chip">Reducción de dimensionalidad</span>
+          <span class="chip">Clustering</span>
+        </div>
+      </div>
+      <div class="project-media">
+        <div class="screen duo">
+          <div>
+            <img src="assets/tsne-resultado.png" alt="Resultado del t-SNE: cada punto es una preforma proyectada en 2D">
+            <p class="media-caption">1 — Mapa t-SNE (245 variables → 2D)</p>
+          </div>
+          <div>
+            <img src="assets/cluster-resultado.png" alt="Resultado del clustering: 5 grupos de preformas identificados sobre el mapa t-SNE">
+            <p class="media-caption">2 — Clustering final (5 grupos)</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- EXPLAINER: t-SNE + Hinton -->
+    <div class="explainer">
+      <div class="explainer-col">
+        <div class="explainer-kicker">Un poco de teoría</div>
+        <h4>¿Qué es t-SNE?</h4>
+        <p>t-SNE (<em>t-distributed Stochastic Neighbor Embedding</em>) es una técnica de <strong>reducción de dimensionalidad</strong>: toma datos descriptos por decenas o cientos de variables — como las 245 de las preformas de AMCOR — y los proyecta en un mapa de 2 o 3 dimensiones que un humano puede mirar y entender de un vistazo.</p>
+        <p>En vez de comparar distancias directas entre puntos, t-SNE calcula qué tan probable es que dos elementos sean "vecinos" en el espacio original, y después acomoda los puntos en el mapa reducido para conservar esas relaciones de vecindad lo mejor posible. Así, los elementos parecidos terminan agrupados y los distintos quedan separados — sin que nadie tenga que decirle al algoritmo qué buscar. Un parámetro clave, la <strong>perplejidad</strong>, define si el mapa prioriza patrones locales (grupos chicos y compactos) o la estructura más global de los datos.</p>
+        <p>Por eso t-SNE es tan usado como paso previo al clustering: primero ordena el espacio de datos, y después un algoritmo como k-means encuentra los grupos sobre ese mapa ya simplificado — el mismo camino que se siguió en el caso de AMCOR.</p>
+      </div>
+      <div class="explainer-col hinton-card">
+        <div class="explainer-kicker">De dónde viene el método</div>
+        <h4>Geoffrey Hinton, el "padrino de la IA"</h4>
+        <p>t-SNE fue publicado en 2008 por <strong>Laurens van der Maaten y Geoffrey Hinton</strong>, como una mejora de una técnica anterior (SNE) que el propio Hinton había presentado en 2002. Fue uno de tantos aportes de Hinton, que durante décadas construyó buena parte de las bases matemáticas del aprendizaje profundo actual.</p>
+        <ul class="hinton-facts">
+          <li><span class="yr">1980s</span> Desarrolló, junto a otros investigadores, el algoritmo de <strong>backpropagation</strong> y la <strong>máquina de Boltzmann</strong>, piezas fundamentales para entrenar redes neuronales.</li>
+          <li><span class="yr">2018</span> Recibió el <strong>Premio Turing</strong> — el "Nobel de la computación" — junto a Yoshua Bengio y Yann LeCun, por sentar las bases del deep learning.</li>
+          <li><span class="yr">2023</span> Dejó su puesto en Google para poder hablar con libertad sobre los riesgos de la inteligencia artificial que él mismo ayudó a crear.</li>
+          <li><span class="yr">2024</span> Ganó el <strong>Premio Nobel de Física</strong> junto a John Hopfield, por sus descubrimientos que hicieron posible el aprendizaje automático con redes neuronales.</li>
+        </ul>
+        <p class="hinton-note">Por eso se lo conoce como el "padrino de la IA": la misma herramienta que usamos para ordenar el mix de preformas de AMCOR nació de uno de los investigadores que hizo posible la inteligencia artificial moderna.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="metodologia" style="background:var(--ink-soft); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Cómo trabajamos</div>
+      <h2>Antes de un panel, un modelo de datos</h2>
+      <p>Ningún tablero se arma directo sobre las planillas tal cual llegan. Primero ordenamos la información en un <strong style="color:var(--text)">modelo en estrella</strong>: un centro con los hechos que importan (ventas, vuelos, escaneos, pedidos) conectado a las dimensiones que los explican (tiempo, producto, ruta, aeropuerto, cliente).</p>
+    </div>
+    <div class="method">
+      <div>
+        <p style="color:var(--text-dim); font-size:15px; margin-bottom:16px;">Ese ordenamiento previo es lo que después permite que los paneles respondan rápido, que se puedan sumar nuevas fuentes de datos sin rehacer todo, y que las mismas piezas se reutilicen entre proyectos distintos.</p>
+        <p style="color:var(--text-dim); font-size:15px;">El diagrama de al lado es un modelo real usado en uno de nuestros proyectos — las entidades específicas quedaron cubiertas porque describen la estructura interna de datos de un cliente.</p>
+      </div>
+      <div>
+        <div class="screen">
+          <img src="assets/modelo-estrella.png" alt="Diagrama de modelo de datos en estrella, con entidades cubiertas por confidencialidad">
+        </div>
+        <p class="media-caption">Modelo en estrella — entidades cubiertas, estructura visible.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="herramientas">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Caja de herramientas</div>
+      <h2>Con qué construimos</h2>
+      <p>Elegimos la herramienta según el problema, no al revés. Esto es lo que usamos hoy en producción.</p>
+    </div>
+    <div class="tools-grid">
+      <div class="tools-cat">
+        <h4>Backend & lenguajes</h4>
+        <ul>
+          <li><strong>Python</strong> (Flask)</li>
+          <li><strong>Node.js</strong> (Express)</li>
+        </ul>
+      </div>
+      <div class="tools-cat">
+        <h4>Datos & modelado</h4>
+        <ul>
+          <li><strong>PostgreSQL</strong> + SQLAlchemy</li>
+          <li><strong>Google Sheets</strong> como backend liviano</li>
+          <li>Modelado dimensional (esquema estrella)</li>
+        </ul>
+      </div>
+      <div class="tools-cat">
+        <h4>Visualización</h4>
+        <ul>
+          <li><strong>Plotly.js</strong> (gráficos y mapas)</li>
+          <li><strong>Power BI</strong> (cuando el cliente ya vive en Microsoft)</li>
+          <li>Tableros y mapas interactivos a medida</li>
+          <li>HTML / CSS / JS</li>
+        </ul>
+      </div>
+      <div class="tools-cat">
+        <h4>Estadística & machine learning</h4>
+        <ul>
+          <li><strong>R</strong> (RStudio)</li>
+          <li>Reducción de dimensionalidad (t-SNE)</li>
+          <li>Clustering (k-means)</li>
+          <li>ggplot2</li>
+        </ul>
+      </div>
+      <div class="tools-cat">
+        <h4>Integraciones & pagos</h4>
+        <ul>
+          <li><strong>Google Sheets API</strong></li>
+          <li><strong>Mercado Pago API</strong></li>
+          <li><strong>WhatsApp Business</strong> Cloud API</li>
+        </ul>
+      </div>
+      <div class="tools-cat">
+        <h4>Automatización & documentos</h4>
+        <ul>
+          <li>Generación de PDF (PDFKit)</li>
+          <li>Códigos de barra / QR (bwip-js, qrcode)</li>
+          <li>Lectura de Excel / PDF (openpyxl, pypdf)</li>
+        </ul>
+      </div>
+      <div class="tools-cat">
+        <h4>Infraestructura</h4>
+        <ul>
+          <li><strong>Render</strong> (deploy y bases de datos)</li>
+          <li>Gunicorn</li>
+          <li>Control de acceso por variables de entorno</li>
+          <li>Rate limiting & compresión</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spotlight">
+      <div class="explainer-kicker">Foco en una herramienta</div>
+      <h4>¿Cómo funciona Power BI, en profundidad?</h4>
+      <div class="spotlight-grid">
+        <div>
+          <span class="step">01</span>
+          <h5>Power Query — traer y limpiar los datos</h5>
+          <p>Es la puerta de entrada: se conecta a Excel, bases SQL, APIs, Google Sheets, carpetas enteras, etc. Ahí se limpian y transforman los datos (renombrar columnas, dividir texto, quitar duplicados, cruzar tablas) antes de que lleguen al modelo — el equivalente a un ETL liviano integrado en la misma herramienta.</p>
+        </div>
+        <div>
+          <span class="step">02</span>
+          <h5>Modelo de datos — cómo se relacionan las tablas</h5>
+          <p>Una vez adentro, las tablas se conectan entre sí por relaciones (por ejemplo, ventas con clientes, o vuelos con aeropuertos) siguiendo la misma lógica de modelado dimensional — esquema estrella — que aplicamos en nuestros propios proyectos. Un buen modelo acá es lo que hace que después todo responda rápido.</p>
+        </div>
+        <div>
+          <span class="step">03</span>
+          <h5>DAX — las cuentas detrás de cada número</h5>
+          <p><strong>DAX</strong> (Data Analysis Expressions) es el lenguaje de fórmulas de Power BI. Con él se crean las "medidas": totales, promedios, variaciones año contra año, porcentajes acumulados — cálculos que se recalculan solos según qué filtros esté usando la persona que mira el reporte en ese momento.</p>
+        </div>
+        <div>
+          <span class="step">04</span>
+          <h5>Reportes — el lienzo visual</h5>
+          <p>Con el modelo y las medidas ya armados, se construyen las páginas del reporte: gráficos, tablas, mapas, tarjetas y filtros (segmentadores) que se cruzan entre sí. Al tocar un filtro, todos los visuales de la página se actualizan juntos, sin recargar nada.</p>
+        </div>
+        <div>
+          <span class="step">05</span>
+          <h5>Publicación y actualización</h5>
+          <p>El reporte se publica en el <strong>servicio de Power BI</strong> (la nube), donde se puede compartir por link o incrustar en otra web, y se programan actualizaciones automáticas para que los datos no queden desactualizados sin que nadie tenga que tocar nada a mano.</p>
+        </div>
+        <div>
+          <span class="step">06</span>
+          <h5>Quién ve qué</h5>
+          <p>Con <strong>seguridad a nivel de fila (RLS)</strong> se puede armar un solo reporte donde cada usuario, al entrar, ve automáticamente solo los datos que le corresponden — por ejemplo, cada sucursal viendo únicamente sus propios números.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer id="contacto">
+  <div class="wrap">
+    <div class="cta-block">
+      <div class="eyebrow" style="justify-content:center;">Empecemos</div>
+      <h2>¿Tenés datos repartidos entre excels, planillas y sistemas que no se hablan?</h2>
+      <p>Armemos juntos un panel a medida para tu operación, del mismo modo que hicimos con los proyectos de arriba.</p>
+      <div class="footer-links">
+        <a class="btn btn-primary" href="mailto:hola@flndataanalysis.com">Escribinos</a>
+        <a class="btn btn-ghost" href="https://drive.google.com/drive/folders/1Yeh-mFeWEtHoMvueCC5HK-hCw6R21sIx?usp=drive_link" target="_blank" rel="noopener">Ver portfolio completo ↗</a>
+        <a class="btn btn-ghost" href="https://qrcontrol.onrender.com/" target="_blank" rel="noopener">Demo QRControl ↗</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>FLN DATA ANALYSIS — Estudio de datos & automatización</span>
+      <span>Buenos Aires, Argentina</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
